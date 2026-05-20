@@ -20,6 +20,7 @@ export type Database = {
           cost: number
           created_at: string
           description: string | null
+          enabled: boolean
           icon: string | null
           id: string
           is_premium: boolean
@@ -32,6 +33,7 @@ export type Database = {
           cost?: number
           created_at?: string
           description?: string | null
+          enabled?: boolean
           icon?: string | null
           id?: string
           is_premium?: boolean
@@ -44,12 +46,70 @@ export type Database = {
           cost?: number
           created_at?: string
           description?: string | null
+          enabled?: boolean
           icon?: string | null
           id?: string
           is_premium?: boolean
           name?: string
           one_time_use?: boolean
           slug?: string
+        }
+        Relationships: []
+      }
+      app_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
         }
         Relationships: []
       }
@@ -60,6 +120,7 @@ export type Database = {
           deaths: number
           fear: number
           id: string
+          last_change_reason: string | null
           last_interaction: string | null
           relationship: number
           trust: number
@@ -73,6 +134,7 @@ export type Database = {
           deaths?: number
           fear?: number
           id?: string
+          last_change_reason?: string | null
           last_interaction?: string | null
           relationship?: number
           trust?: number
@@ -86,6 +148,7 @@ export type Database = {
           deaths?: number
           fear?: number
           id?: string
+          last_change_reason?: string | null
           last_interaction?: string | null
           relationship?: number
           trust?: number
@@ -105,48 +168,66 @@ export type Database = {
       }
       characters: {
         Row: {
+          aggression: number
+          can_kill: boolean
           category: string | null
           chats_count: number
           created_at: string
+          danger: number
           description: string | null
+          enabled: boolean
           id: string
           image_url: string | null
           is_nsfw: boolean
           is_premium: boolean
           likes: number
           name: string
+          personality: string | null
+          point_reward: number
           slug: string
           sort_order: number
           tagline: string | null
           wallpaper_url: string | null
         }
         Insert: {
+          aggression?: number
+          can_kill?: boolean
           category?: string | null
           chats_count?: number
           created_at?: string
+          danger?: number
           description?: string | null
+          enabled?: boolean
           id?: string
           image_url?: string | null
           is_nsfw?: boolean
           is_premium?: boolean
           likes?: number
           name: string
+          personality?: string | null
+          point_reward?: number
           slug: string
           sort_order?: number
           tagline?: string | null
           wallpaper_url?: string | null
         }
         Update: {
+          aggression?: number
+          can_kill?: boolean
           category?: string | null
           chats_count?: number
           created_at?: string
+          danger?: number
           description?: string | null
+          enabled?: boolean
           id?: string
           image_url?: string | null
           is_nsfw?: boolean
           is_premium?: boolean
           likes?: number
           name?: string
+          personality?: string | null
+          point_reward?: number
           slug?: string
           sort_order?: number
           tagline?: string | null
@@ -231,6 +312,30 @@ export type Database = {
           },
         ]
       }
+      level_history: {
+        Row: {
+          created_at: string
+          from_level: number
+          id: string
+          to_level: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_level: number
+          id?: string
+          to_level: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_level?: number
+          id?: string
+          to_level?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           chat_id: string
@@ -296,8 +401,10 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banned: boolean
           created_at: string
           display_name: string | null
+          email: string | null
           id: string
           is_premium: boolean
           points: number
@@ -306,8 +413,10 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          banned?: boolean
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id: string
           is_premium?: boolean
           points?: number
@@ -316,8 +425,10 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          banned?: boolean
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           is_premium?: boolean
           points?: number
@@ -326,11 +437,44 @@ export type Database = {
         }
         Relationships: []
       }
+      relationship_history: {
+        Row: {
+          character_id: string
+          created_at: string
+          delta: number
+          id: string
+          new_value: number
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          delta: number
+          id?: string
+          new_value: number
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          new_value?: number
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       story_realms: {
         Row: {
+          branches: Json
           chats_count: number
+          checkpoints: Json
           created_at: string
           description: string | null
+          enabled: boolean
           id: string
           image_url: string | null
           is_nsfw: boolean
@@ -341,9 +485,12 @@ export type Database = {
           title: string
         }
         Insert: {
+          branches?: Json
           chats_count?: number
+          checkpoints?: Json
           created_at?: string
           description?: string | null
+          enabled?: boolean
           id?: string
           image_url?: string | null
           is_nsfw?: boolean
@@ -354,9 +501,12 @@ export type Database = {
           title: string
         }
         Update: {
+          branches?: Json
           chats_count?: number
+          checkpoints?: Json
           created_at?: string
           description?: string | null
+          enabled?: boolean
           id?: string
           image_url?: string | null
           is_nsfw?: boolean
@@ -478,6 +628,27 @@ export type Database = {
           },
         ]
       }
+      user_levels: {
+        Row: {
+          level: number
+          total_hours: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          level?: number
+          total_hours?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          level?: number
+          total_hours?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           alive: boolean
@@ -545,6 +716,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compute_level: { Args: { _total_hours: number }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -552,6 +724,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
+      is_owner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
