@@ -9,38 +9,341 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TanglyRouteImport } from './routes/tangly'
+import { Route as SyndicatesRouteImport } from './routes/syndicates'
+import { Route as RealmsRouteImport } from './routes/realms'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PremiumRouteImport } from './routes/premium'
+import { Route as EntitiesRouteImport } from './routes/entities'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AbilitiesRouteImport } from './routes/abilities'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as ChatIdRouteImport } from './routes/chat.$id'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
+import { Route as AdminConfigRouteImport } from './routes/admin.config'
+import { Route as AdminCharactersRouteImport } from './routes/admin.characters'
+import { Route as AdminBackupRouteImport } from './routes/admin.backup'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminUsersIdRouteImport } from './routes/admin.users.$id'
 
+const TanglyRoute = TanglyRouteImport.update({
+  id: '/tangly',
+  path: '/tangly',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SyndicatesRoute = SyndicatesRouteImport.update({
+  id: '/syndicates',
+  path: '/syndicates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RealmsRoute = RealmsRouteImport.update({
+  id: '/realms',
+  path: '/realms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PremiumRoute = PremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntitiesRoute = EntitiesRouteImport.update({
+  id: '/entities',
+  path: '/entities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AbilitiesRoute = AbilitiesRouteImport.update({
+  id: '/abilities',
+  path: '/abilities',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ChatIdRoute = ChatIdRouteImport.update({
+  id: '/chat/$id',
+  path: '/chat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMessagesRoute = AdminMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConfigRoute = AdminConfigRouteImport.update({
+  id: '/config',
+  path: '/config',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCharactersRoute = AdminCharactersRouteImport.update({
+  id: '/characters',
+  path: '/characters',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBackupRoute = AdminBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersIdRoute = AdminUsersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminUsersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/abilities': typeof AbilitiesRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/entities': typeof EntitiesRoute
+  '/premium': typeof PremiumRoute
+  '/profile': typeof ProfileRoute
+  '/realms': typeof RealmsRoute
+  '/syndicates': typeof SyndicatesRoute
+  '/tangly': typeof TanglyRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/backup': typeof AdminBackupRoute
+  '/admin/characters': typeof AdminCharactersRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/users': typeof AdminUsersRouteWithChildren
+  '/chat/$id': typeof ChatIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/users/$id': typeof AdminUsersIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/abilities': typeof AbilitiesRoute
+  '/auth': typeof AuthRoute
+  '/entities': typeof EntitiesRoute
+  '/premium': typeof PremiumRoute
+  '/profile': typeof ProfileRoute
+  '/realms': typeof RealmsRoute
+  '/syndicates': typeof SyndicatesRoute
+  '/tangly': typeof TanglyRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/backup': typeof AdminBackupRoute
+  '/admin/characters': typeof AdminCharactersRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/users': typeof AdminUsersRouteWithChildren
+  '/chat/$id': typeof ChatIdRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/users/$id': typeof AdminUsersIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/abilities': typeof AbilitiesRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/entities': typeof EntitiesRoute
+  '/premium': typeof PremiumRoute
+  '/profile': typeof ProfileRoute
+  '/realms': typeof RealmsRoute
+  '/syndicates': typeof SyndicatesRoute
+  '/tangly': typeof TanglyRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/backup': typeof AdminBackupRoute
+  '/admin/characters': typeof AdminCharactersRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/users': typeof AdminUsersRouteWithChildren
+  '/chat/$id': typeof ChatIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/users/$id': typeof AdminUsersIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/abilities'
+    | '/admin'
+    | '/auth'
+    | '/entities'
+    | '/premium'
+    | '/profile'
+    | '/realms'
+    | '/syndicates'
+    | '/tangly'
+    | '/admin/analytics'
+    | '/admin/audit'
+    | '/admin/backup'
+    | '/admin/characters'
+    | '/admin/config'
+    | '/admin/messages'
+    | '/admin/users'
+    | '/chat/$id'
+    | '/admin/'
+    | '/admin/users/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/abilities'
+    | '/auth'
+    | '/entities'
+    | '/premium'
+    | '/profile'
+    | '/realms'
+    | '/syndicates'
+    | '/tangly'
+    | '/admin/analytics'
+    | '/admin/audit'
+    | '/admin/backup'
+    | '/admin/characters'
+    | '/admin/config'
+    | '/admin/messages'
+    | '/admin/users'
+    | '/chat/$id'
+    | '/admin'
+    | '/admin/users/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/abilities'
+    | '/admin'
+    | '/auth'
+    | '/entities'
+    | '/premium'
+    | '/profile'
+    | '/realms'
+    | '/syndicates'
+    | '/tangly'
+    | '/admin/analytics'
+    | '/admin/audit'
+    | '/admin/backup'
+    | '/admin/characters'
+    | '/admin/config'
+    | '/admin/messages'
+    | '/admin/users'
+    | '/chat/$id'
+    | '/admin/'
+    | '/admin/users/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AbilitiesRoute: typeof AbilitiesRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  EntitiesRoute: typeof EntitiesRoute
+  PremiumRoute: typeof PremiumRoute
+  ProfileRoute: typeof ProfileRoute
+  RealmsRoute: typeof RealmsRoute
+  SyndicatesRoute: typeof SyndicatesRoute
+  TanglyRoute: typeof TanglyRoute
+  ChatIdRoute: typeof ChatIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tangly': {
+      id: '/tangly'
+      path: '/tangly'
+      fullPath: '/tangly'
+      preLoaderRoute: typeof TanglyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/syndicates': {
+      id: '/syndicates'
+      path: '/syndicates'
+      fullPath: '/syndicates'
+      preLoaderRoute: typeof SyndicatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/realms': {
+      id: '/realms'
+      path: '/realms'
+      fullPath: '/realms'
+      preLoaderRoute: typeof RealmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/premium': {
+      id: '/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof PremiumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entities': {
+      id: '/entities'
+      path: '/entities'
+      fullPath: '/entities'
+      preLoaderRoute: typeof EntitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/abilities': {
+      id: '/abilities'
+      path: '/abilities'
+      fullPath: '/abilities'
+      preLoaderRoute: typeof AbilitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +351,127 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/chat/$id': {
+      id: '/chat/$id'
+      path: '/chat/$id'
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof ChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/messages': {
+      id: '/admin/messages'
+      path: '/messages'
+      fullPath: '/admin/messages'
+      preLoaderRoute: typeof AdminMessagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/config': {
+      id: '/admin/config'
+      path: '/config'
+      fullPath: '/admin/config'
+      preLoaderRoute: typeof AdminConfigRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/characters': {
+      id: '/admin/characters'
+      path: '/characters'
+      fullPath: '/admin/characters'
+      preLoaderRoute: typeof AdminCharactersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/backup': {
+      id: '/admin/backup'
+      path: '/backup'
+      fullPath: '/admin/backup'
+      preLoaderRoute: typeof AdminBackupRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users/$id': {
+      id: '/admin/users/$id'
+      path: '/$id'
+      fullPath: '/admin/users/$id'
+      preLoaderRoute: typeof AdminUsersIdRouteImport
+      parentRoute: typeof AdminUsersRoute
+    }
   }
 }
 
+interface AdminUsersRouteChildren {
+  AdminUsersIdRoute: typeof AdminUsersIdRoute
+}
+
+const AdminUsersRouteChildren: AdminUsersRouteChildren = {
+  AdminUsersIdRoute: AdminUsersIdRoute,
+}
+
+const AdminUsersRouteWithChildren = AdminUsersRoute._addFileChildren(
+  AdminUsersRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminBackupRoute: typeof AdminBackupRoute
+  AdminCharactersRoute: typeof AdminCharactersRoute
+  AdminConfigRoute: typeof AdminConfigRoute
+  AdminMessagesRoute: typeof AdminMessagesRoute
+  AdminUsersRoute: typeof AdminUsersRouteWithChildren
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAuditRoute: AdminAuditRoute,
+  AdminBackupRoute: AdminBackupRoute,
+  AdminCharactersRoute: AdminCharactersRoute,
+  AdminConfigRoute: AdminConfigRoute,
+  AdminMessagesRoute: AdminMessagesRoute,
+  AdminUsersRoute: AdminUsersRouteWithChildren,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AbilitiesRoute: AbilitiesRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AuthRoute: AuthRoute,
+  EntitiesRoute: EntitiesRoute,
+  PremiumRoute: PremiumRoute,
+  ProfileRoute: ProfileRoute,
+  RealmsRoute: RealmsRoute,
+  SyndicatesRoute: SyndicatesRoute,
+  TanglyRoute: TanglyRoute,
+  ChatIdRoute: ChatIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
