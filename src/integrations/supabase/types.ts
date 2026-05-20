@@ -26,6 +26,7 @@ export type Database = {
           is_premium: boolean
           name: string
           one_time_use: boolean
+          reaction_prompt: string | null
           slug: string
         }
         Insert: {
@@ -39,6 +40,7 @@ export type Database = {
           is_premium?: boolean
           name: string
           one_time_use?: boolean
+          reaction_prompt?: string | null
           slug: string
         }
         Update: {
@@ -52,6 +54,7 @@ export type Database = {
           is_premium?: boolean
           name?: string
           one_time_use?: boolean
+          reaction_prompt?: string | null
           slug?: string
         }
         Relationships: []
@@ -169,69 +172,126 @@ export type Database = {
       characters: {
         Row: {
           aggression: number
+          backstory: string | null
+          banner_url: string | null
           can_kill: boolean
           category: string | null
           chats_count: number
           created_at: string
           danger: number
           description: string | null
+          enable_scraping: boolean
           enabled: boolean
+          friendliness: number
+          greeting_message: string | null
+          humor: number
           id: string
           image_url: string | null
           is_nsfw: boolean
           is_premium: boolean
           likes: number
+          memory_rules: string | null
           name: string
           personality: string | null
           point_reward: number
+          powers: string[] | null
+          relationship_modifiers: Json
+          scrape_sources: string[] | null
           slug: string
           sort_order: number
+          speaking_style: string | null
+          special_abilities: string[] | null
+          starter_scenarios: Json
+          system_prompt: string | null
           tagline: string | null
+          tags: string[] | null
+          tone: string | null
+          traits: string[] | null
+          universe: string | null
           wallpaper_url: string | null
+          weaknesses: string[] | null
         }
         Insert: {
           aggression?: number
+          backstory?: string | null
+          banner_url?: string | null
           can_kill?: boolean
           category?: string | null
           chats_count?: number
           created_at?: string
           danger?: number
           description?: string | null
+          enable_scraping?: boolean
           enabled?: boolean
+          friendliness?: number
+          greeting_message?: string | null
+          humor?: number
           id?: string
           image_url?: string | null
           is_nsfw?: boolean
           is_premium?: boolean
           likes?: number
+          memory_rules?: string | null
           name: string
           personality?: string | null
           point_reward?: number
+          powers?: string[] | null
+          relationship_modifiers?: Json
+          scrape_sources?: string[] | null
           slug: string
           sort_order?: number
+          speaking_style?: string | null
+          special_abilities?: string[] | null
+          starter_scenarios?: Json
+          system_prompt?: string | null
           tagline?: string | null
+          tags?: string[] | null
+          tone?: string | null
+          traits?: string[] | null
+          universe?: string | null
           wallpaper_url?: string | null
+          weaknesses?: string[] | null
         }
         Update: {
           aggression?: number
+          backstory?: string | null
+          banner_url?: string | null
           can_kill?: boolean
           category?: string | null
           chats_count?: number
           created_at?: string
           danger?: number
           description?: string | null
+          enable_scraping?: boolean
           enabled?: boolean
+          friendliness?: number
+          greeting_message?: string | null
+          humor?: number
           id?: string
           image_url?: string | null
           is_nsfw?: boolean
           is_premium?: boolean
           likes?: number
+          memory_rules?: string | null
           name?: string
           personality?: string | null
           point_reward?: number
+          powers?: string[] | null
+          relationship_modifiers?: Json
+          scrape_sources?: string[] | null
           slug?: string
           sort_order?: number
+          speaking_style?: string | null
+          special_abilities?: string[] | null
+          starter_scenarios?: Json
+          system_prompt?: string | null
           tagline?: string | null
+          tags?: string[] | null
+          tone?: string | null
+          traits?: string[] | null
+          universe?: string | null
           wallpaper_url?: string | null
+          weaknesses?: string[] | null
         }
         Relationships: []
       }
@@ -370,6 +430,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      moderation_logs: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          reason: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       points_ledger: {
         Row: {
@@ -597,6 +687,8 @@ export type Database = {
           equipped: boolean
           id: string
           last_used_at: string | null
+          total_uses: number
+          use_history: Json
           user_id: string
           uses_remaining: number | null
         }
@@ -606,6 +698,8 @@ export type Database = {
           equipped?: boolean
           id?: string
           last_used_at?: string | null
+          total_uses?: number
+          use_history?: Json
           user_id: string
           uses_remaining?: number | null
         }
@@ -615,6 +709,8 @@ export type Database = {
           equipped?: boolean
           id?: string
           last_used_at?: string | null
+          total_uses?: number
+          use_history?: Json
           user_id?: string
           uses_remaining?: number | null
         }
@@ -632,20 +728,26 @@ export type Database = {
         Row: {
           level: number
           total_hours: number
+          total_messages: number
           updated_at: string
           user_id: string
+          xp: number
         }
         Insert: {
           level?: number
           total_hours?: number
+          total_messages?: number
           updated_at?: string
           user_id: string
+          xp?: number
         }
         Update: {
           level?: number
           total_hours?: number
+          total_messages?: number
           updated_at?: string
           user_id?: string
+          xp?: number
         }
         Relationships: []
       }
@@ -726,6 +828,15 @@ export type Database = {
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
+      owner_gift_points: {
+        Args: { _amount: number; _reason?: string; _user_id: string }
+        Returns: undefined
+      }
+      owner_set_premium: {
+        Args: { _is_premium: boolean; _user_id: string }
+        Returns: undefined
+      }
+      relationship_label: { Args: { _score: number }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
