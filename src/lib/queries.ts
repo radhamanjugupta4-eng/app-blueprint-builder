@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { rowToCard, type Card } from "./orion-data";
 
 async function fetchTable(table: "characters" | "story_realms" | "syndicates", tag?: string): Promise<Card[]> {
+  // `characters` uses `name`; `story_realms` and `syndicates` use `title`.
+  const nameCol = table === "characters" ? "name" : "title";
   const { data, error } = await supabase
     .from(table)
-    .select("slug,name,title,image_url,likes,chats_count,is_premium,is_nsfw,sort_order")
+    .select(`slug,${nameCol},image_url,likes,chats_count,is_premium,is_nsfw,sort_order`)
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((r, i) => rowToCard(r as never, i, tag));
