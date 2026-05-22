@@ -24,7 +24,7 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email, password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
@@ -32,7 +32,16 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Check your inbox to confirm your email.");
+        // Auto-confirm is enabled — session is created instantly
+        if (data.session) {
+          toast.success("Welcome to Orion ✨");
+          navigate({ to: "/" });
+        } else {
+          // fallback if confirmation is required
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInErr) { toast.success("Account created. Please sign in."); setMode("signin"); }
+          else { toast.success("Welcome to Orion ✨"); navigate({ to: "/" }); }
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

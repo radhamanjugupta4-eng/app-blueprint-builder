@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { aiGenerateCharacterDraft, simulateCharacter } from "@/lib/ai.functions";
+import { aiGenerateCharacterDraft, simulateCharacter, testCharacterChat } from "@/lib/ai.functions";
 import { toast } from "sonner";
-import { Sparkles, Upload, Trash2, Save, Wand2, Play, Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { Sparkles, Upload, Trash2, Save, Wand2, Play, Plus, ChevronDown, ChevronRight, MessageCircle, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/characters")({
   component: CharactersAdmin,
@@ -184,8 +184,18 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
   const [c, setC] = useState<Character>(initial);
   const [tab, setTab] = useState<"basic"|"lore"|"personality"|"combat"|"ai"|"scrape">("basic");
   const [simResults, setSimResults] = useState<Array<{ prompt: string; reply: string }> | null>(null);
+  const [testReply, setTestReply] = useState<string | null>(null);
   const set = <K extends keyof Character>(k: K, v: Character[K]) => setC({ ...c, [k]: v });
   const sim = useServerFn(simulateCharacter);
+  const testChat = useServerFn(testCharacterChat);
+  const testMut = useMutation({
+    mutationFn: async () => {
+      if (!c.id) throw new Error("Save the character first");
+      return testChat({ data: { characterId: c.id } });
+    },
+    onSuccess: (r) => { setTestReply(r.reply); toast.success(`${r.name} is alive ✨`); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -277,11 +287,25 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
               onChange={(e) => set("starter_scenarios", e.target.value.split("\n").filter(Boolean))}
               className="input" />
           </Field>
-          <div className="rounded-lg bg-secondary/50 p-3">
-            <button disabled={simMut.isPending} onClick={() => simMut.mutate()}
-              className="flex items-center gap-2 rounded-full cosmic-bg px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
-              <Play className="h-4 w-4" /> {simMut.isPending ? "Simulating 20 chats…" : "Simulate Character (GROQ)"}
-            </button>
+          <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <button disabled={simMut.isPending} onClick={() => simMut.mutate()}
+                className="flex items-center gap-2 rounded-full cosmic-bg px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-95">
+                <Play className="h-4 w-4" /> {simMut.isPending ? "Simulating 20 chats…" : "Simulate (20 prompts)"}
+              </button>
+              <button disabled={testMut.isPending || !c.id} onClick={() => testMut.mutate()}
+                className="flex items-center gap-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-4 py-2 text-sm font-semibold disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-95">
+                {testMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+                {testMut.isPending ? "Testing…" : "Test Character Chat"}
+              </button>
+              {!c.id && <span className="text-[11px] text-muted-foreground self-center">Save first to enable Test Chat</span>}
+            </div>
+            {testReply && (
+              <div className="rounded-lg glass p-3 text-sm text-foreground animate-in fade-in slide-in-from-top-1">
+                <p className="text-[10px] uppercase text-emerald-400 mb-1">Live reply from {c.name}</p>
+                {testReply}
+              </div>
+            )}
             {simResults && (
               <div className="mt-3 max-h-96 overflow-auto space-y-2">
                 {simResults.map((r, i) => (
