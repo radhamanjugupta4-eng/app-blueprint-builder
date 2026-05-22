@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { aiGenerateCharacterDraft, simulateCharacter } from "@/lib/ai.functions";
+import { aiGenerateCharacterDraft, simulateCharacter, testCharacterChat } from "@/lib/ai.functions";
 import { toast } from "sonner";
-import { Sparkles, Upload, Trash2, Save, Wand2, Play, Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { Sparkles, Upload, Trash2, Save, Wand2, Play, Plus, ChevronDown, ChevronRight, MessageCircle, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/characters")({
   component: CharactersAdmin,
