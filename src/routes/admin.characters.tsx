@@ -184,8 +184,18 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
   const [c, setC] = useState<Character>(initial);
   const [tab, setTab] = useState<"basic"|"lore"|"personality"|"combat"|"ai"|"scrape">("basic");
   const [simResults, setSimResults] = useState<Array<{ prompt: string; reply: string }> | null>(null);
+  const [testReply, setTestReply] = useState<string | null>(null);
   const set = <K extends keyof Character>(k: K, v: Character[K]) => setC({ ...c, [k]: v });
   const sim = useServerFn(simulateCharacter);
+  const testChat = useServerFn(testCharacterChat);
+  const testMut = useMutation({
+    mutationFn: async () => {
+      if (!c.id) throw new Error("Save the character first");
+      return testChat({ data: { characterId: c.id } });
+    },
+    onSuccess: (r) => { setTestReply(r.reply); toast.success(`${r.name} is alive ✨`); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const save = useMutation({
     mutationFn: async () => {
