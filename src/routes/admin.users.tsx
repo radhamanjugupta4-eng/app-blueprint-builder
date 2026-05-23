@@ -14,7 +14,7 @@ export const Route = createFileRoute("/admin/users")({
 function UsersPage() {
   const [q, setQ] = useState("");
   const qc = useQueryClient();
-  const { isAdmin } = useOrion();
+  const { isAdmin, authLoading } = useOrion();
   const banUser = useServerFn(setBanned);
   const updateRole = useServerFn(setUserRole);
 
@@ -22,12 +22,22 @@ function UsersPage() {
     queryKey: ["admin-users", q],
     queryFn: async () => {
       let query = supabase.from("profiles")
-        .select("id,display_name,email,points,is_premium,banned,created_at,user_roles(role)")
+        .select("id,display_name,email,points,is_premium,banned,created_at")
         .order("created_at", { ascending: false }).limit(200);
       if (q) query = query.or(`display_name.ilike.%${q}%,email.ilike.%${q}%`);
-      const { data, error } = await query;
+      const [{ data, error }, { data: roleRows, error: roleError }] = await Promise.all([
+        query,
+        supabase.from("user_roles").select("user_id,role"),
+      ]);
       if (error) throw error;
-      return data ?? [];
+      if (roleError) throw roleError;
+
+      const roleMap = new Map<string, string>();
+      for (const row of roleRows ?? []) {
+        if (row.role === "admin") roleMap.set(row.user_id, "admin");
+      }
+
+      return (data ?? []).map((user) => ({ ...user, role: roleMap.get(user.id) ?? "user" }));
     },
   });
 
@@ -56,6 +66,7 @@ function UsersPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  if (authLoading) return <p className="text-sm text-muted-foreground">Loading access…</p>;
   if (!isAdmin) return <p className="text-sm text-muted-foreground">Restricted to administrators.</p>;
 
   return (
@@ -73,11 +84,6 @@ function UsersPage() {
           <tbody>
             {(users ?? []).map((u) => (
               <tr key={u.id} className="border-t border-border/50">
-                {(() => {
-                  const roles = ((u.user_roles ?? []) as Array<{ role: string }>).map((r) => r.role);
-                  const role = roles.includes("admin") ? "admin" : "user";
-                  return (
-                    <>
                 <td className="py-2 pr-3">
                   <Link to="/admin/users/$id" params={{ id: u.id }} className="hover:text-gradient">
                     <div className="font-medium">{u.display_name ?? "—"}</div>
@@ -94,16 +100,13 @@ function UsersPage() {
                 <td className="pr-3">{u.is_premium ? "Yes" : "—"}</td>
                 <td className="pr-3">
                   <div>{u.banned ? <span className="text-destructive">Banned</span> : <span className="text-muted-foreground">Active</span>}</div>
-                  <div className="text-[11px] uppercase text-muted-foreground">{role}</div>
+                  <div className="text-[11px] uppercase text-muted-foreground">{u.role}</div>
                 </td>
                 <td className="space-x-2 text-right">
                   <button onClick={() => ban.mutate({ id: u.id, banned: !u.banned })} className="rounded-full glass px-3 py-1 text-xs">{u.banned ? "Unban" : "Ban"}</button>
                   <button onClick={() => grantAdmin.mutate({ id: u.id, grant: true })} className="rounded-full glass px-3 py-1 text-xs">+Admin</button>
                   <button onClick={() => grantAdmin.mutate({ id: u.id, grant: false })} className="rounded-full glass px-3 py-1 text-xs">-Admin</button>
                 </td>
-                    </>
-                  );
-                })()}
               </tr>
             ))}
           </tbody>
