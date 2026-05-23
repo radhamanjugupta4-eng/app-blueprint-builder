@@ -6,6 +6,8 @@ type OrionState = {
   // auth
   session: Session | null;
   user: User | null;
+  role: "user" | "admin" | "owner" | null;
+  authLoading: boolean;
   isGuest: boolean;
   setGuest: (v: boolean) => void;
   signOut: () => Promise<void>;
@@ -38,6 +40,8 @@ export function OrionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isGuest, setIsGuestState] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [bootstrapped, setBootstrapped] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // user state mirrors
   const [spice, setSpiceState] = useState(false);
@@ -46,6 +50,7 @@ export function OrionProvider({ children }: { children: ReactNode }) {
   const [ownedAbilities, setOwned] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [role, setRole] = useState<"user" | "admin" | "owner" | null>(null);
   const [level, setLevel] = useState(1);
   const [totalHours, setTotalHours] = useState(0);
 
@@ -55,9 +60,13 @@ export function OrionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
+      setBootstrapped(true);
       if (s) setIsGuestState(false);
     });
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setBootstrapped(true);
+    });
     if (typeof window !== "undefined") {
       setIsGuestState(localStorage.getItem(GUEST_KEY) === "1");
     }
@@ -65,28 +74,61 @@ export function OrionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refresh = async () => {
+    setRefreshing(true);
     if (!user) {
       setPoints(0); setIsPremium(false); setOwned([]);
-      setIsAdmin(false); setIsOwner(false); setLevel(1); setTotalHours(0);
+      setIsAdmin(false); setIsOwner(false); setRole(null); setLevel(1); setTotalHours(0); setSpiceState(false);
+      setRefreshing(false);
       return;
     }
-    const owner = (user.email ?? "").toLowerCase() === "gupta.ravinderkr@gmail.com";
-    setIsOwner(owner);
-    const [{ data: profile }, { data: abil }, { data: roles }, { data: lvl }] = await Promise.all([
-      supabase.from("profiles").select("points,spice_enabled,is_premium").eq("id", user.id).maybeSingle(),
-      supabase.from("user_abilities").select("ability_id").eq("user_id", user.id),
-      supabase.from("user_roles").select("role").eq("user_id", user.id),
-      supabase.from("user_levels").select("level,total_hours").eq("user_id", user.id).maybeSingle(),
-    ]);
-    if (profile) {
-      setPoints(profile.points ?? 0);
-      setSpiceState(!!profile.spice_enabled);
-      setIsPremium(!!profile.is_premium);
+    try {
+      const owner = (user.email ?? "").toLowerCase() === "gupta.ravinderkr@gmail.com";
+      setIsOwner(owner);
+      const [{ data: profile, error: profileErr }, { data: abil, error: abilErr }, { data: roles, error: rolesErr }, { data: lvl, error: lvlErr }] = await Promise.all([
+        supabase.from("profiles").select("points,spice_enabled,is_premium").eq("id", user.id).maybeSingle(),
+        supabase.from("user_abilities").select("ability_id").eq("user_id", user.id),
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase.from("user_levels").select("level,total_hours").eq("user_id", user.id).maybeSingle(),
+      ]);
+      if (profileErr) throw profileErr;
+      if (abilErr) throw abilErr;
+      if (rolesErr) throw rolesErr;
+      if (lvlErr) throw lvlErr;
+
+      if (profile) {
+        setPoints(profile.points ?? 0);
+        setSpiceState(!!profile.spice_enabled);
+        setIsPremium(!!profile.is_premium);
+      } else {
+        setPoints(0);
+        setSpiceState(false);
+        setIsPremium(false);
+      }
+      setOwned((abil ?? []).map((r: { ability_id: string }) => r.ability_id));
+      const hasAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+      setIsAdmin(hasAdmin || owner);
+      setRole(owner ? "owner" : hasAdmin ? "admin" : "user");
+      if (lvl) {
+        setLevel(lvl.level ?? 1);
+        setTotalHours(Number(lvl.total_hours ?? 0));
+      } else {
+        setLevel(1);
+        setTotalHours(0);
+      }
+    } catch (error) {
+      console.error("Failed to refresh Orion session state", error);
+      setOwned([]);
+      setPoints(0);
+      setIsPremium(false);
+      setSpiceState(false);
+      setIsAdmin(false);
+      setIsOwner(false);
+      setRole((user.email ?? "").toLowerCase() === "gupta.ravinderkr@gmail.com" ? "owner" : "user");
+      setLevel(1);
+      setTotalHours(0);
+    } finally {
+      setRefreshing(false);
     }
-    setOwned((abil ?? []).map((r: { ability_id: string }) => r.ability_id));
-    const hasAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
-    setIsAdmin(hasAdmin || owner);
-    if (lvl) { setLevel(lvl.level ?? 1); setTotalHours(Number(lvl.total_hours ?? 0)); }
   };
 
   // refresh on user change
@@ -133,7 +175,7 @@ export function OrionProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{
-      session, user, isGuest, setGuest, signOut,
+      session, user, role, authLoading: !bootstrapped || refreshing, isGuest, setGuest, signOut,
       sidebarOpen, setSidebarOpen,
       spice, setSpice, points, isPremium, ownedAbilities, buyAbility, refresh,
       isAdmin, isOwner, level, totalHours,
