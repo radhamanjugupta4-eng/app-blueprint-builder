@@ -37,7 +37,10 @@ function UsersPage() {
         if (row.role === "admin") roleMap.set(row.user_id, "admin");
       }
 
-      return (data ?? []).map((user) => ({ ...user, role: roleMap.get(user.id) ?? "user" }));
+      return (data ?? []).map((user) => ({
+        ...user,
+        role: user.email?.toLowerCase() === "gupta.ravinderkr@gmail.com" ? "owner" : (roleMap.get(user.id) ?? "user"),
+      }));
     },
   });
 
@@ -104,8 +107,8 @@ function UsersPage() {
                 </td>
                 <td className="space-x-2 text-right">
                   <button onClick={() => ban.mutate({ id: u.id, banned: !u.banned })} className="rounded-full glass px-3 py-1 text-xs">{u.banned ? "Unban" : "Ban"}</button>
-                  <button onClick={() => grantAdmin.mutate({ id: u.id, grant: true })} className="rounded-full glass px-3 py-1 text-xs">+Admin</button>
-                  <button onClick={() => grantAdmin.mutate({ id: u.id, grant: false })} className="rounded-full glass px-3 py-1 text-xs">-Admin</button>
+                  {u.role !== "owner" && <button onClick={() => grantAdmin.mutate({ id: u.id, grant: true })} className="rounded-full glass px-3 py-1 text-xs">+Admin</button>}
+                  {u.role !== "owner" && <button onClick={() => grantAdmin.mutate({ id: u.id, grant: false })} className="rounded-full glass px-3 py-1 text-xs">-Admin</button>}
                 </td>
               </tr>
             ))}
