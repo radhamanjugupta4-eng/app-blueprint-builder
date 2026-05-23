@@ -50,3 +50,27 @@ export const setBanned = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+export const setUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ userId: z.string().uuid(), role: z.enum(["user", "admin"]) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase as never, userId!);
+
+    const { error: deleteError } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.userId)
+      .eq("role", "admin");
+    if (deleteError) throw deleteError;
+
+    if (data.role === "admin") {
+      const { error: insertError } = await supabase
+        .from("user_roles")
+        .insert({ user_id: data.userId, role: "admin" });
+      if (insertError) throw insertError;
+    }
+
+    return { ok: true };
+  });
