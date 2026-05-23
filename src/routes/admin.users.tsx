@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { setBanned, setUserRole } from "@/lib/admin-tools.functions";
 import { toast } from "sonner";
 import { useOrion } from "@/components/orion/OrionProvider";
 
@@ -12,13 +14,15 @@ export const Route = createFileRoute("/admin/users")({
 function UsersPage() {
   const [q, setQ] = useState("");
   const qc = useQueryClient();
-  const { isOwner } = useOrion();
+  const { isAdmin } = useOrion();
+  const banUser = useServerFn(setBanned);
+  const updateRole = useServerFn(setUserRole);
 
   const { data: users } = useQuery({
     queryKey: ["admin-users", q],
     queryFn: async () => {
       let query = supabase.from("profiles")
-        .select("id,display_name,email,points,is_premium,banned,created_at")
+        .select("id,display_name,email,points,is_premium,banned,created_at,user_roles(role)")
         .order("created_at", { ascending: false }).limit(200);
       if (q) query = query.or(`display_name.ilike.%${q}%,email.ilike.%${q}%`);
       const { data, error } = await query;
@@ -29,8 +33,7 @@ function UsersPage() {
 
   const ban = useMutation({
     mutationFn: async ({ id, banned }: { id: string; banned: boolean }) => {
-      const { error } = await supabase.from("profiles").update({ banned }).eq("id", id);
-      if (error) throw error;
+      await banUser({ data: { userId: id, banned } });
     },
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
     onError: (e: Error) => toast.error(e.message),
@@ -47,17 +50,13 @@ function UsersPage() {
 
   const grantAdmin = useMutation({
     mutationFn: async ({ id, grant }: { id: string; grant: boolean }) => {
-      if (grant) {
-        const { error } = await supabase.from("user_roles").insert({ user_id: id, role: "admin" });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("user_roles").delete().eq("user_id", id).eq("role", "admin");
-        if (error) throw error;
-      }
+      await updateRole({ data: { userId: id, role: grant ? "admin" : "user" } });
     },
-    onSuccess: () => toast.success("Role updated"),
+    onSuccess: () => { toast.success("Role updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  if (!isAdmin) return <p className="text-sm text-muted-foreground">Restricted to administrators.</p>;
 
   return (
     <div className="space-y-4">
@@ -74,6 +73,11 @@ function UsersPage() {
           <tbody>
             {(users ?? []).map((u) => (
               <tr key={u.id} className="border-t border-border/50">
+                {(() => {
+                  const roles = ((u.user_roles ?? []) as Array<{ role: string }>).map((r) => r.role);
+                  const role = roles.includes("admin") ? "admin" : "user";
+                  return (
+                    <>
                 <td className="py-2 pr-3">
                   <Link to="/admin/users/$id" params={{ id: u.id }} className="hover:text-gradient">
                     <div className="font-medium">{u.display_name ?? "—"}</div>
@@ -88,12 +92,18 @@ function UsersPage() {
                   />
                 </td>
                 <td className="pr-3">{u.is_premium ? "Yes" : "—"}</td>
-                <td className="pr-3">{u.banned ? <span className="text-destructive">Banned</span> : <span className="text-muted-foreground">Active</span>}</td>
+                <td className="pr-3">
+                  <div>{u.banned ? <span className="text-destructive">Banned</span> : <span className="text-muted-foreground">Active</span>}</div>
+                  <div className="text-[11px] uppercase text-muted-foreground">{role}</div>
+                </td>
                 <td className="space-x-2 text-right">
                   <button onClick={() => ban.mutate({ id: u.id, banned: !u.banned })} className="rounded-full glass px-3 py-1 text-xs">{u.banned ? "Unban" : "Ban"}</button>
-                  {isOwner && <button onClick={() => grantAdmin.mutate({ id: u.id, grant: true })} className="rounded-full glass px-3 py-1 text-xs">+Admin</button>}
-                  {isOwner && <button onClick={() => grantAdmin.mutate({ id: u.id, grant: false })} className="rounded-full glass px-3 py-1 text-xs">-Admin</button>}
+                  <button onClick={() => grantAdmin.mutate({ id: u.id, grant: true })} className="rounded-full glass px-3 py-1 text-xs">+Admin</button>
+                  <button onClick={() => grantAdmin.mutate({ id: u.id, grant: false })} className="rounded-full glass px-3 py-1 text-xs">-Admin</button>
                 </td>
+                    </>
+                  );
+                })()}
               </tr>
             ))}
           </tbody>
