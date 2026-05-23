@@ -12,7 +12,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { setGuest } = useOrion();
+  const { setGuest, refresh } = useOrion();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,17 +34,19 @@ function AuthPage() {
         if (error) throw error;
         // Auto-confirm is enabled — session is created instantly
         if (data.session) {
+          await refresh();
           toast.success("Welcome to Orion ✨");
           navigate({ to: "/" });
         } else {
           // fallback if confirmation is required
           const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
           if (signInErr) { toast.success("Account created. Please sign in."); setMode("signin"); }
-          else { toast.success("Welcome to Orion ✨"); navigate({ to: "/" }); }
+          else { await refresh(); toast.success("Welcome to Orion ✨"); navigate({ to: "/" }); }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await refresh();
         toast.success("Welcome back, traveler.");
         navigate({ to: "/" });
       }
