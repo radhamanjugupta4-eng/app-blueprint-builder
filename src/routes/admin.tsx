@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useRouterState, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useOrion } from "@/components/orion/OrionProvider";
 import { Users, MessageSquare, BarChart3, Settings2, ScrollText, Database, LayoutDashboard, Shield, Sparkles } from "lucide-react";
 
@@ -18,8 +18,12 @@ const NAV = [
 ];
 
 function AdminLayout() {
-  const { isAdmin, isOwner, user } = useOrion();
+  const { isAdmin, isOwner, user, authLoading } = useOrion();
   const path = useRouterState({ select: (r) => r.location.pathname });
+
+  if (authLoading) {
+    return <div className="py-20 text-center text-muted-foreground">Loading access…</div>;
+  }
 
   if (!user) {
     return (
