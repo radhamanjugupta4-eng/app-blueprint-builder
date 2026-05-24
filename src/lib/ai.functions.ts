@@ -107,62 +107,74 @@ export const chatWithCharacter = createServerFn({ method: "POST" })
     if (cErr) throw new Error(cErr.message);
     if (!character) throw new Error("Character not found");
 
+    // Load admin-controlled AI settings
+    const { data: settingsRow } = await supabase
+      .from("app_config").select("value").eq("key", "ai_provider_settings").maybeSingle();
+    const settings = (settingsRow?.value ?? {}) as {
+      temperature?: number; max_tokens?: number; memory_size?: number;
+      reply_length?: "short" | "medium" | "long"; safety?: "off" | "standard" | "strict";
+      memory_enabled?: boolean;
+    };
+    const memSize = Math.max(2, Math.min(60, settings.memory_size ?? 30));
+    const replyMap = { short: 280, medium: 600, long: 1100 } as const;
+    const maxTokens = Math.min(
+      settings.max_tokens ?? 1024,
+      replyMap[settings.reply_length ?? "medium"],
+    );
+
     // find/create chat
     let chatId: string;
     const { data: existing } = await supabase
-      .from("chats")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("character_id", character.id)
-      .maybeSingle();
+      .from("chats").select("id")
+      .eq("user_id", userId).eq("character_id", character.id).maybeSingle();
     if (existing) {
       chatId = existing.id;
     } else {
       const { data: created, error: chatErr } = await supabase
         .from("chats")
         .insert({ user_id: userId, character_id: character.id, title: character.name })
-        .select("id")
-        .single();
+        .select("id").single();
       if (chatErr) throw new Error(chatErr.message);
       chatId = created.id;
     }
 
-    // load history (last 30)
-    const { data: history } = await supabase
-      .from("messages")
-      .select("role,content")
-      .eq("chat_id", chatId)
-      .order("created_at", { ascending: true })
-      .limit(30);
+    // load history (respect memory toggle + size)
+    const memoryOn = settings.memory_enabled !== false;
+    const history = memoryOn
+      ? (await supabase.from("messages").select("role,content")
+          .eq("chat_id", chatId).order("created_at", { ascending: true }).limit(memSize)).data
+      : [];
 
-    // load profile + level + relationship
     const [{ data: profile }, { data: lvl }, { data: rel }] = await Promise.all([
       supabase.from("profiles").select("points,spice_enabled").eq("id", userId).maybeSingle(),
       supabase.from("user_levels").select("level").eq("user_id", userId).maybeSingle(),
-      supabase
-        .from("character_state")
-        .select("relationship")
-        .eq("user_id", userId)
-        .eq("character_id", character.id)
-        .maybeSingle(),
+      supabase.from("character_state").select("relationship")
+        .eq("user_id", userId).eq("character_id", character.id).maybeSingle(),
     ]);
 
     const sys = buildSystemPrompt(character as Record<string, unknown>, {
       relationship: rel?.relationship ?? 0,
       level: lvl?.level ?? 1,
       points: profile?.points ?? 0,
-      spice: !!profile?.spice_enabled,
+      spice: !!profile?.spice_enabled && settings.safety !== "strict",
     });
 
+    const safetyNote = settings.safety === "strict"
+      ? "\nSafety: strict — refuse sexual, graphic, or harmful content."
+      : settings.safety === "off" ? "" : "\nSafety: standard — avoid explicit harmful content.";
+    const lengthNote = `\nReply length target: ${settings.reply_length ?? "medium"}.`;
+
     const messages: ChatMsg[] = [
-      { role: "system", content: sys },
+      { role: "system", content: sys + safetyNote + lengthNote },
       ...(history ?? []).map((m) => ({ role: m.role as ChatMsg["role"], content: m.content })),
       { role: "user", content: data.message },
     ];
 
-    const reply = await groqChat(messages, { max_tokens: 600 });
+    const reply = await groqChat(messages, {
+      max_tokens: maxTokens,
+      temperature: settings.temperature ?? 0.85,
+    });
 
-    // persist
     await supabase.from("messages").insert([
       { chat_id: chatId, user_id: userId, role: "user", content: data.message },
       { chat_id: chatId, user_id: userId, role: "assistant", content: reply },

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Sparkles, Send, Heart, Skull, Plus, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Send, Heart, Skull, Plus, Loader2, ArrowDown, Clock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/chat/$id")({
   component: ChatPage,
 });
 
-type Msg = { id?: string; role: string; content: string; pending?: boolean };
+type Msg = { id?: string; role: string; content: string; pending?: boolean; ts?: number };
 
 function ChatPage() {
   const { id } = Route.useParams();
@@ -23,6 +23,8 @@ function ChatPage() {
   const [showAbilities, setShowAbilities] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [showTimestamps, setShowTimestamps] = useState(false);
+  const [atBottom, setAtBottom] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
@@ -43,14 +45,23 @@ function ChatPage() {
     setMessages(seed);
   }, [history]);
 
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
+  };
+
+  useEffect(() => { if (atBottom) scrollToBottom(); }, [messages, atBottom]);
+
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
+  };
 
   const send = useMutation({
     mutationFn: (text: string) => sendFn({ data: { slug: id, message: text } }),
     onSuccess: (res) => {
-      setMessages((m) => [...m.filter((x) => !x.pending), { role: "assistant", content: res.reply }]);
+      setMessages((m) => [...m.filter((x) => !x.pending), { role: "assistant", content: res.reply, ts: Date.now() }]);
       qc.invalidateQueries({ queryKey: ["chat-history", id] });
     },
     onError: (e: Error) => {
@@ -84,9 +95,10 @@ function ChatPage() {
     if (!text) return;
     if (!user) { toast.error("Please sign in to chat."); return; }
     setInput("");
+    setAtBottom(true);
     setMessages((m) => [
       ...m,
-      { role: "user", content: text },
+      { role: "user", content: text, ts: Date.now() },
       { role: "assistant", content: "", pending: true },
     ]);
     send.mutate(text);
@@ -113,6 +125,13 @@ function ChatPage() {
                 Online · powered by Orion AI
               </p>
             </div>
+            <button
+              onClick={() => setShowTimestamps((s) => !s)}
+              title="Toggle timestamps"
+              className={`rounded-full p-2 transition-all active:scale-90 ${showTimestamps ? "cosmic-bg text-primary-foreground" : "glass text-muted-foreground"}`}
+            >
+              <Clock className="h-3.5 w-3.5" />
+            </button>
             <button
               onClick={() => setShowAbilities((s) => !s)}
               className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all active:scale-95 ${
@@ -160,7 +179,7 @@ function ChatPage() {
           </div>
         )}
 
-        <div ref={scrollRef} className="flex-1 mx-auto max-w-4xl w-full px-4 sm:px-6 py-6 space-y-4 overflow-y-auto">
+        <div ref={scrollRef} onScroll={onScroll} className="flex-1 mx-auto max-w-4xl w-full px-4 sm:px-6 py-6 space-y-4 overflow-y-auto scroll-smooth">
           {histLoading && (
             <div className="space-y-3 animate-pulse">
               <div className="h-16 rounded-2xl glass max-w-[75%]" />
@@ -181,26 +200,43 @@ function ChatPage() {
               className={`flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300 ${m.role === "user" ? "justify-end" : ""}`}
             >
               {m.role !== "user" && <img src={image} alt="" className="h-9 w-9 rounded-full object-cover flex-shrink-0" />}
-              <div
-                className={`max-w-[78%] rounded-2xl p-4 text-[15px] leading-relaxed ${
-                  m.role === "user"
-                    ? "rounded-tr-sm cosmic-bg text-primary-foreground"
-                    : "rounded-tl-sm glass text-foreground"
-                }`}
-              >
-                {m.pending ? (
-                  <span className="inline-flex gap-1 items-center text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full bg-primary-glow animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="h-2 w-2 rounded-full bg-primary-glow animate-bounce" style={{ animationDelay: "120ms" }} />
-                    <span className="h-2 w-2 rounded-full bg-primary-glow animate-bounce" style={{ animationDelay: "240ms" }} />
+              <div className={`flex flex-col gap-1 max-w-[78%] ${m.role === "user" ? "items-end" : "items-start"}`}>
+                <div
+                  className={`rounded-2xl p-4 text-[15px] leading-relaxed ${
+                    m.role === "user"
+                      ? "rounded-tr-sm cosmic-bg text-primary-foreground"
+                      : "rounded-tl-sm glass text-foreground"
+                  }`}
+                >
+                  {m.pending ? (
+                    <span className="inline-flex gap-1 items-center text-muted-foreground">
+                      <span className="h-2 w-2 rounded-full bg-primary-glow animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="h-2 w-2 rounded-full bg-primary-glow animate-bounce" style={{ animationDelay: "120ms" }} />
+                      <span className="h-2 w-2 rounded-full bg-primary-glow animate-bounce" style={{ animationDelay: "240ms" }} />
+                    </span>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{m.content}</p>
+                  )}
+                </div>
+                {showTimestamps && m.ts && (
+                  <span className="text-[10px] text-muted-foreground px-1">
+                    {new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
-                ) : (
-                  <p className="whitespace-pre-wrap">{m.content}</p>
                 )}
               </div>
             </div>
           ))}
         </div>
+
+        {!atBottom && (
+          <button
+            onClick={() => { setAtBottom(true); scrollToBottom(); }}
+            className="fixed bottom-24 right-6 z-20 flex h-10 w-10 items-center justify-center rounded-full cosmic-bg text-primary-foreground shadow-lg animate-in fade-in zoom-in transition-all hover:scale-110 active:scale-90"
+            aria-label="Scroll to bottom"
+          >
+            <ArrowDown className="h-4 w-4" />
+          </button>
+        )}
 
         <div className="sticky bottom-0 glass-strong border-t border-border">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 py-4">
