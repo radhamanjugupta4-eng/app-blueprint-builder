@@ -406,10 +406,26 @@ function TagInput({ value, onChange }: { value: string[]; onChange: (v: string[]
 }
 
 function ImageField({ url, onChange }: { url: string; onChange: (u: string) => void }) {
+  const [broken, setBroken] = useState(false);
   return (
-    <div className="flex items-center gap-2">
-      {url ? <img src={url} alt="" className="h-12 w-12 rounded-lg object-cover" /> : <div className="h-12 w-12 rounded-lg bg-secondary flex items-center justify-center"><Upload className="h-4 w-4 text-muted-foreground" /></div>}
-      <input value={url} onChange={(e) => onChange(e.target.value)} placeholder="https://…" className="input flex-1" />
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-3">
+        {url && !broken ? (
+          <img src={url} alt="preview" onError={() => setBroken(true)} onLoad={() => setBroken(false)}
+            className="h-16 w-16 rounded-lg object-cover ring-1 ring-border" />
+        ) : (
+          <div className={`h-16 w-16 rounded-lg bg-secondary flex items-center justify-center ${broken ? "text-destructive" : "text-muted-foreground"}`}>
+            <Upload className="h-5 w-5" />
+          </div>
+        )}
+        <input
+          value={url}
+          onChange={(e) => { setBroken(false); onChange(e.target.value.trim()); }}
+          placeholder="Paste image URL…"
+          className="input flex-1"
+        />
+      </div>
+      {broken && url && <p className="text-[11px] text-destructive">Image URL could not be loaded.</p>}
     </div>
   );
 }
