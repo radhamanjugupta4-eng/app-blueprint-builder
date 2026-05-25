@@ -42,23 +42,31 @@ async function serperSearch(query: string) {
 }
 
 function buildSystemPrompt(c: Record<string, unknown>, extra?: { relationship?: number; level?: number; points?: number; spice?: boolean }) {
+  const bannedWords = Array.isArray(c.banned_words) ? (c.banned_words as string[]) : [];
+  const blockedTopics = Array.isArray(c.blocked_topics) ? (c.blocked_topics as string[]) : [];
+  const avgWords = typeof c.avg_words_target === "number" ? (c.avg_words_target as number) : 80;
   const lines = [
     `You are ${c.name}. ${c.tagline ?? ""}`.trim(),
     c.personality ? `Personality: ${c.personality}` : "",
     Array.isArray(c.traits) && (c.traits as string[]).length ? `Traits: ${(c.traits as string[]).join(", ")}` : "",
     c.speaking_style ? `Speaking style: ${c.speaking_style}` : "",
+    c.voice_tone ? `Voice tone: ${c.voice_tone}` : "",
     c.tone ? `Tone: ${c.tone}` : "",
     c.universe ? `Universe: ${c.universe}` : "",
     c.backstory ? `Backstory: ${c.backstory}` : "",
     Array.isArray(c.powers) && (c.powers as string[]).length ? `Powers: ${(c.powers as string[]).join(", ")}` : "",
     Array.isArray(c.weaknesses) && (c.weaknesses as string[]).length ? `Weaknesses: ${(c.weaknesses as string[]).join(", ")}` : "",
     Array.isArray(c.special_abilities) && (c.special_abilities as string[]).length ? `Special abilities: ${(c.special_abilities as string[]).join(", ")}` : "",
+    c.example_dialogues ? `Example dialogues:\n${c.example_dialogues}` : "",
+    c.forbidden_behavior ? `Forbidden behavior: ${c.forbidden_behavior}` : "",
     c.memory_rules ? `Memory rules: ${c.memory_rules}` : "",
     c.system_prompt ? `Additional rules: ${c.system_prompt}` : "",
+    bannedWords.length ? `Never use these words: ${bannedWords.join(", ")}.` : "",
+    blockedTopics.length ? `Never discuss these topics; deflect in character: ${blockedTopics.join(", ")}.` : "",
     extra?.relationship !== undefined ? `Current relationship score with the user: ${extra.relationship} (range -100 to 100).` : "",
     extra?.level !== undefined ? `User level: ${extra.level}. User points: ${extra.points ?? 0}.` : "",
     extra?.spice ? "The user has spice mode on; you may be flirty when appropriate." : "",
-    "Stay fully in character. Respond in 1-4 short paragraphs. Never break the fourth wall. Never mention you are an AI.",
+    `Stay fully in character. Aim for about ${avgWords} words per reply. Never break the fourth wall. Never mention you are an AI.`,
   ];
   return lines.filter(Boolean).join("\n");
 }
@@ -159,9 +167,12 @@ export const chatWithCharacter = createServerFn({ method: "POST" })
       spice: !!profile?.spice_enabled && settings.safety !== "strict",
     });
 
-    const safetyNote = settings.safety === "strict"
+    // Per-character chat filter overrides the global safety if set
+    const charFilter = (character as { chat_filter?: string }).chat_filter ?? "standard";
+    const effectiveSafety = charFilter === "off" ? (settings.safety ?? "standard") : charFilter;
+    const safetyNote = effectiveSafety === "strict"
       ? "\nSafety: strict — refuse sexual, graphic, or harmful content."
-      : settings.safety === "off" ? "" : "\nSafety: standard — avoid explicit harmful content.";
+      : effectiveSafety === "off" ? "" : "\nSafety: standard — avoid explicit harmful content.";
     const lengthNote = `\nReply length target: ${settings.reply_length ?? "medium"}.`;
 
     const messages: ChatMsg[] = [
@@ -170,10 +181,21 @@ export const chatWithCharacter = createServerFn({ method: "POST" })
       { role: "user", content: data.message },
     ];
 
-    const reply = await groqChat(messages, {
+    let reply = await groqChat(messages, {
       max_tokens: maxTokens,
       temperature: settings.temperature ?? 0.85,
     });
+
+    // Post-filter: scrub any banned words that leaked through
+    const banned = (character as { banned_words?: string[] }).banned_words ?? [];
+    for (const w of banned) {
+      if (!w) continue;
+      reply = reply.replace(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi"), "—");
+    }
+
+    // Simulated typing delay (capped to avoid hanging the worker)
+    const delay = Math.min(5000, Math.max(0, (character as { response_delay_ms?: number }).response_delay_ms ?? 0));
+    if (delay > 0) await new Promise((r) => setTimeout(r, delay));
 
     await supabase.from("messages").insert([
       { chat_id: chatId, user_id: userId, role: "user", content: data.message },

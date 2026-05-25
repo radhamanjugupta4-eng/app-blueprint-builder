@@ -44,6 +44,17 @@ type Character = {
   greeting_message?: string | null;
   starter_scenarios?: unknown;
   relationship_modifiers?: unknown;
+  // controls (per-character chat behavior)
+  avg_words_target: number;
+  response_delay_ms: number;
+  banned_words?: string[] | null;
+  blocked_topics?: string[] | null;
+  chat_filter: "off" | "standard" | "strict";
+  forbidden_behavior?: string | null;
+  example_dialogues?: string | null;
+  voice_tone?: string | null;
+  featured: boolean;
+  trending: boolean;
   // scraping
   enable_scraping: boolean;
   scrape_sources?: string[] | null;
@@ -59,6 +70,8 @@ const BLANK: Character = {
   can_kill: false, is_premium: false, is_nsfw: false, enabled: true, point_reward: 3,
   enable_scraping: false, tags: [], traits: [], powers: [], weaknesses: [], special_abilities: [],
   scrape_sources: ["web"], starter_scenarios: [], relationship_modifiers: {},
+  avg_words_target: 80, response_delay_ms: 0, banned_words: [], blocked_topics: [],
+  chat_filter: "standard", featured: false, trending: false,
 };
 
 function CharactersAdmin() {
@@ -182,7 +195,7 @@ function AIBuilder({ onDraft }: { onDraft: (d: Partial<Character>) => void }) {
 function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Character; onClose: () => void; onDelete?: () => void; creating?: boolean }) {
   const qc = useQueryClient();
   const [c, setC] = useState<Character>(initial);
-  const [tab, setTab] = useState<"basic"|"lore"|"personality"|"combat"|"ai"|"scrape">("basic");
+  const [tab, setTab] = useState<"basic"|"lore"|"personality"|"combat"|"controls"|"ai"|"scrape">("basic");
   const [simResults, setSimResults] = useState<Array<{ prompt: string; reply: string }> | null>(null);
   const [testReply, setTestReply] = useState<string | null>(null);
   const set = <K extends keyof Character>(k: K, v: Character[K]) => setC({ ...c, [k]: v });
@@ -213,7 +226,7 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const TABS = ["basic","lore","personality","combat","ai","scrape"] as const;
+  const TABS = ["basic","lore","personality","combat","controls","ai","scrape"] as const;
 
   return (
     <div className="space-y-3">
@@ -241,6 +254,8 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
               <Toggle label="Premium" v={c.is_premium} on={(b) => set("is_premium", b)} />
               <Toggle label="NSFW" v={c.is_nsfw} on={(b) => set("is_nsfw", b)} />
               <Toggle label="Can Kill" v={c.can_kill} on={(b) => set("can_kill", b)} />
+              <Toggle label="Featured" v={c.featured} on={(b) => set("featured", b)} />
+              <Toggle label="Trending" v={c.trending} on={(b) => set("trending", b)} />
             </div>
           </Field>
         </div>
@@ -260,6 +275,9 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
           <Field label="Traits" full><TagInput value={c.traits ?? []} onChange={(v) => set("traits", v)} /></Field>
           <Field label="Speaking style"><input value={c.speaking_style ?? ""} onChange={(e) => set("speaking_style", e.target.value)} className="input" /></Field>
           <Field label="Tone"><input value={c.tone ?? ""} onChange={(e) => set("tone", e.target.value)} className="input" /></Field>
+          <Field label="Voice tone (e.g. raspy, formal, sweet)"><input value={c.voice_tone ?? ""} onChange={(e) => set("voice_tone", e.target.value)} className="input" /></Field>
+          <Field label="Forbidden behavior"><input value={c.forbidden_behavior ?? ""} onChange={(e) => set("forbidden_behavior", e.target.value)} className="input" placeholder="e.g. never apologize, never break character" /></Field>
+          <Field label="Example dialogues" full><textarea rows={4} value={c.example_dialogues ?? ""} onChange={(e) => set("example_dialogues", e.target.value)} className="input font-mono text-xs" placeholder={`User: Hi\n${c.name || "Char"}: ...`} /></Field>
           <Slider label="Aggression" v={c.aggression} on={(n) => set("aggression", n)} />
           <Slider label="Friendliness" v={c.friendliness} on={(n) => set("friendliness", n)} />
           <Slider label="Danger" v={c.danger} on={(n) => set("danger", n)} />
@@ -274,6 +292,36 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
           <Field label="Special Abilities"><TagInput value={c.special_abilities ?? []} onChange={(v) => set("special_abilities", v)} /></Field>
         </div>
       )}
+
+      {tab === "controls" && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label={`Avg words per reply: ${c.avg_words_target}`} full>
+            <input type="range" min={20} max={300} step={5} value={c.avg_words_target}
+              onChange={(e) => set("avg_words_target", Number(e.target.value))} className="w-full" />
+            <p className="text-[11px] text-muted-foreground mt-1">Target length of each AI reply, in words.</p>
+          </Field>
+          <Field label={`Response delay: ${c.response_delay_ms} ms`} full>
+            <input type="range" min={0} max={5000} step={100} value={c.response_delay_ms}
+              onChange={(e) => set("response_delay_ms", Number(e.target.value))} className="w-full" />
+            <p className="text-[11px] text-muted-foreground mt-1">Simulated typing delay before reply is delivered.</p>
+          </Field>
+          <Field label="Chat filter" full>
+            <div className="flex gap-2">
+              {(["off","standard","strict"] as const).map((opt) => (
+                <button key={opt} type="button" onClick={() => set("chat_filter", opt)}
+                  className={`flex-1 rounded-full px-3 py-1.5 text-xs capitalize transition-all active:scale-95 ${c.chat_filter === opt ? "cosmic-bg text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">Per-character safety. Overrides global setting for this character.</p>
+          </Field>
+          <Field label="Banned words" full><TagInput value={c.banned_words ?? []} onChange={(v) => set("banned_words", v)} /></Field>
+          <Field label="Blocked topics" full><TagInput value={c.blocked_topics ?? []} onChange={(v) => set("blocked_topics", v)} /></Field>
+        </div>
+      )}
+
+
 
       {tab === "ai" && (
         <div className="grid grid-cols-1 gap-3">
