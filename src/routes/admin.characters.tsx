@@ -195,7 +195,7 @@ function AIBuilder({ onDraft }: { onDraft: (d: Partial<Character>) => void }) {
 function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Character; onClose: () => void; onDelete?: () => void; creating?: boolean }) {
   const qc = useQueryClient();
   const [c, setC] = useState<Character>(initial);
-  const [tab, setTab] = useState<"basic"|"lore"|"personality"|"combat"|"ai"|"scrape">("basic");
+  const [tab, setTab] = useState<"basic"|"lore"|"personality"|"combat"|"controls"|"ai"|"scrape">("basic");
   const [simResults, setSimResults] = useState<Array<{ prompt: string; reply: string }> | null>(null);
   const [testReply, setTestReply] = useState<string | null>(null);
   const set = <K extends keyof Character>(k: K, v: Character[K]) => setC({ ...c, [k]: v });
