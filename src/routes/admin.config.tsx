@@ -8,7 +8,7 @@ export const Route = createFileRoute("/admin/config")({
   component: ConfigPage,
 });
 
-const TABS = ["AI", "Relationship", "Levels", "Points", "Flags", "Characters", "Abilities", "Stories"] as const;
+const TABS = ["AI", "Relationship", "Levels", "Points", "Flags"] as const;
 type Tab = typeof TABS[number];
 
 function ConfigPage() {
