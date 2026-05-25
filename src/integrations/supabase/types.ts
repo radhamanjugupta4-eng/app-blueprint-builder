@@ -172,16 +172,23 @@ export type Database = {
       characters: {
         Row: {
           aggression: number
+          avg_words_target: number
           backstory: string | null
+          banned_words: string[]
           banner_url: string | null
+          blocked_topics: string[]
           can_kill: boolean
           category: string | null
+          chat_filter: string
           chats_count: number
           created_at: string
           danger: number
           description: string | null
           enable_scraping: boolean
           enabled: boolean
+          example_dialogues: string | null
+          featured: boolean
+          forbidden_behavior: string | null
           friendliness: number
           greeting_message: string | null
           humor: number
@@ -196,6 +203,7 @@ export type Database = {
           point_reward: number
           powers: string[] | null
           relationship_modifiers: Json
+          response_delay_ms: number
           scrape_sources: string[] | null
           slug: string
           sort_order: number
@@ -207,22 +215,31 @@ export type Database = {
           tags: string[] | null
           tone: string | null
           traits: string[] | null
+          trending: boolean
           universe: string | null
+          voice_tone: string | null
           wallpaper_url: string | null
           weaknesses: string[] | null
         }
         Insert: {
           aggression?: number
+          avg_words_target?: number
           backstory?: string | null
+          banned_words?: string[]
           banner_url?: string | null
+          blocked_topics?: string[]
           can_kill?: boolean
           category?: string | null
+          chat_filter?: string
           chats_count?: number
           created_at?: string
           danger?: number
           description?: string | null
           enable_scraping?: boolean
           enabled?: boolean
+          example_dialogues?: string | null
+          featured?: boolean
+          forbidden_behavior?: string | null
           friendliness?: number
           greeting_message?: string | null
           humor?: number
@@ -237,6 +254,7 @@ export type Database = {
           point_reward?: number
           powers?: string[] | null
           relationship_modifiers?: Json
+          response_delay_ms?: number
           scrape_sources?: string[] | null
           slug: string
           sort_order?: number
@@ -248,22 +266,31 @@ export type Database = {
           tags?: string[] | null
           tone?: string | null
           traits?: string[] | null
+          trending?: boolean
           universe?: string | null
+          voice_tone?: string | null
           wallpaper_url?: string | null
           weaknesses?: string[] | null
         }
         Update: {
           aggression?: number
+          avg_words_target?: number
           backstory?: string | null
+          banned_words?: string[]
           banner_url?: string | null
+          blocked_topics?: string[]
           can_kill?: boolean
           category?: string | null
+          chat_filter?: string
           chats_count?: number
           created_at?: string
           danger?: number
           description?: string | null
           enable_scraping?: boolean
           enabled?: boolean
+          example_dialogues?: string | null
+          featured?: boolean
+          forbidden_behavior?: string | null
           friendliness?: number
           greeting_message?: string | null
           humor?: number
@@ -278,6 +305,7 @@ export type Database = {
           point_reward?: number
           powers?: string[] | null
           relationship_modifiers?: Json
+          response_delay_ms?: number
           scrape_sources?: string[] | null
           slug?: string
           sort_order?: number
@@ -289,7 +317,9 @@ export type Database = {
           tags?: string[] | null
           tone?: string | null
           traits?: string[] | null
+          trending?: boolean
           universe?: string | null
+          voice_tone?: string | null
           wallpaper_url?: string | null
           weaknesses?: string[] | null
         }
