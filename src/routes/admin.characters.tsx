@@ -44,6 +44,17 @@ type Character = {
   greeting_message?: string | null;
   starter_scenarios?: unknown;
   relationship_modifiers?: unknown;
+  // controls (per-character chat behavior)
+  avg_words_target: number;
+  response_delay_ms: number;
+  banned_words?: string[] | null;
+  blocked_topics?: string[] | null;
+  chat_filter: "off" | "standard" | "strict";
+  forbidden_behavior?: string | null;
+  example_dialogues?: string | null;
+  voice_tone?: string | null;
+  featured: boolean;
+  trending: boolean;
   // scraping
   enable_scraping: boolean;
   scrape_sources?: string[] | null;
@@ -59,6 +70,8 @@ const BLANK: Character = {
   can_kill: false, is_premium: false, is_nsfw: false, enabled: true, point_reward: 3,
   enable_scraping: false, tags: [], traits: [], powers: [], weaknesses: [], special_abilities: [],
   scrape_sources: ["web"], starter_scenarios: [], relationship_modifiers: {},
+  avg_words_target: 80, response_delay_ms: 0, banned_words: [], blocked_topics: [],
+  chat_filter: "standard", featured: false, trending: false,
 };
 
 function CharactersAdmin() {
