@@ -226,7 +226,7 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const TABS = ["basic","lore","personality","combat","ai","scrape"] as const;
+  const TABS = ["basic","lore","personality","combat","controls","ai","scrape"] as const;
 
   return (
     <div className="space-y-3">
