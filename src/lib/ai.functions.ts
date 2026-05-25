@@ -167,9 +167,12 @@ export const chatWithCharacter = createServerFn({ method: "POST" })
       spice: !!profile?.spice_enabled && settings.safety !== "strict",
     });
 
-    const safetyNote = settings.safety === "strict"
+    // Per-character chat filter overrides the global safety if set
+    const charFilter = (character as { chat_filter?: string }).chat_filter ?? "standard";
+    const effectiveSafety = charFilter === "off" ? (settings.safety ?? "standard") : charFilter;
+    const safetyNote = effectiveSafety === "strict"
       ? "\nSafety: strict — refuse sexual, graphic, or harmful content."
-      : settings.safety === "off" ? "" : "\nSafety: standard — avoid explicit harmful content.";
+      : effectiveSafety === "off" ? "" : "\nSafety: standard — avoid explicit harmful content.";
     const lengthNote = `\nReply length target: ${settings.reply_length ?? "medium"}.`;
 
     const messages: ChatMsg[] = [
@@ -178,10 +181,21 @@ export const chatWithCharacter = createServerFn({ method: "POST" })
       { role: "user", content: data.message },
     ];
 
-    const reply = await groqChat(messages, {
+    let reply = await groqChat(messages, {
       max_tokens: maxTokens,
       temperature: settings.temperature ?? 0.85,
     });
+
+    // Post-filter: scrub any banned words that leaked through
+    const banned = (character as { banned_words?: string[] }).banned_words ?? [];
+    for (const w of banned) {
+      if (!w) continue;
+      reply = reply.replace(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi"), "—");
+    }
+
+    // Simulated typing delay (capped to avoid hanging the worker)
+    const delay = Math.min(5000, Math.max(0, (character as { response_delay_ms?: number }).response_delay_ms ?? 0));
+    if (delay > 0) await new Promise((r) => setTimeout(r, delay));
 
     await supabase.from("messages").insert([
       { chat_id: chatId, user_id: userId, role: "user", content: data.message },
