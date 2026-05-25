@@ -28,9 +28,7 @@ function ConfigPage() {
       {tab === "Levels" && <JSONEditor configKey="level_thresholds" label="Level thresholds" />}
       {tab === "Points" && <JSONEditor configKey="point_economy" label="Point economy" />}
       {tab === "Flags" && <FlagEditor />}
-      {tab === "Characters" && <CharactersEditor />}
-      {tab === "Abilities" && <AbilitiesEditor />}
-      {tab === "Stories" && <StoriesEditor />}
+    
     </div>
   );
 }
