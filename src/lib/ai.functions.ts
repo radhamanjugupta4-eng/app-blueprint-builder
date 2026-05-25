@@ -42,23 +42,31 @@ async function serperSearch(query: string) {
 }
 
 function buildSystemPrompt(c: Record<string, unknown>, extra?: { relationship?: number; level?: number; points?: number; spice?: boolean }) {
+  const bannedWords = Array.isArray(c.banned_words) ? (c.banned_words as string[]) : [];
+  const blockedTopics = Array.isArray(c.blocked_topics) ? (c.blocked_topics as string[]) : [];
+  const avgWords = typeof c.avg_words_target === "number" ? (c.avg_words_target as number) : 80;
   const lines = [
     `You are ${c.name}. ${c.tagline ?? ""}`.trim(),
     c.personality ? `Personality: ${c.personality}` : "",
     Array.isArray(c.traits) && (c.traits as string[]).length ? `Traits: ${(c.traits as string[]).join(", ")}` : "",
     c.speaking_style ? `Speaking style: ${c.speaking_style}` : "",
+    c.voice_tone ? `Voice tone: ${c.voice_tone}` : "",
     c.tone ? `Tone: ${c.tone}` : "",
     c.universe ? `Universe: ${c.universe}` : "",
     c.backstory ? `Backstory: ${c.backstory}` : "",
     Array.isArray(c.powers) && (c.powers as string[]).length ? `Powers: ${(c.powers as string[]).join(", ")}` : "",
     Array.isArray(c.weaknesses) && (c.weaknesses as string[]).length ? `Weaknesses: ${(c.weaknesses as string[]).join(", ")}` : "",
     Array.isArray(c.special_abilities) && (c.special_abilities as string[]).length ? `Special abilities: ${(c.special_abilities as string[]).join(", ")}` : "",
+    c.example_dialogues ? `Example dialogues:\n${c.example_dialogues}` : "",
+    c.forbidden_behavior ? `Forbidden behavior: ${c.forbidden_behavior}` : "",
     c.memory_rules ? `Memory rules: ${c.memory_rules}` : "",
     c.system_prompt ? `Additional rules: ${c.system_prompt}` : "",
+    bannedWords.length ? `Never use these words: ${bannedWords.join(", ")}.` : "",
+    blockedTopics.length ? `Never discuss these topics; deflect in character: ${blockedTopics.join(", ")}.` : "",
     extra?.relationship !== undefined ? `Current relationship score with the user: ${extra.relationship} (range -100 to 100).` : "",
     extra?.level !== undefined ? `User level: ${extra.level}. User points: ${extra.points ?? 0}.` : "",
     extra?.spice ? "The user has spice mode on; you may be flirty when appropriate." : "",
-    "Stay fully in character. Respond in 1-4 short paragraphs. Never break the fourth wall. Never mention you are an AI.",
+    `Stay fully in character. Aim for about ${avgWords} words per reply. Never break the fourth wall. Never mention you are an AI.`,
   ];
   return lines.filter(Boolean).join("\n");
 }
