@@ -254,6 +254,8 @@ function CharacterEditor({ initial, onClose, onDelete, creating }: { initial: Ch
               <Toggle label="Premium" v={c.is_premium} on={(b) => set("is_premium", b)} />
               <Toggle label="NSFW" v={c.is_nsfw} on={(b) => set("is_nsfw", b)} />
               <Toggle label="Can Kill" v={c.can_kill} on={(b) => set("can_kill", b)} />
+              <Toggle label="Featured" v={c.featured} on={(b) => set("featured", b)} />
+              <Toggle label="Trending" v={c.trending} on={(b) => set("trending", b)} />
             </div>
           </Field>
         </div>
